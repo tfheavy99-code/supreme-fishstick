@@ -1,1 +1,33 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splash Screen</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="splash">
+        <div class="text-container">
+            <h1 id="splash-text">Black & White Animation</h1>
+            <button id="ok-btn">OK</button>
+        </div>
+    </div>
+
+    <audio id="click-sfx" src="sfx/click.mp3"></audio>
+
+    <script>
+        const btn = document.getElementById('ok-btn');
+        const sfx = document.getElementById('click-sfx');
+
+        btn.addEventListener('click', () => {
+            sfx.play();
+            document.querySelector('.splash').classList.add('fade-out');
+            setTimeout(() => {
+                window.location.href = 'welcome.html';
+            }, 1000); // wait 1s for fade-out
+        });
+    </script>
+</body>
+</html>
