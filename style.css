@@ -1,0 +1,58 @@
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+/* Splash Screen */
+.splash {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(to bottom, black 0%, white 100%);
+    overflow: hidden;
+    transition: opacity 1s ease;
+}
+
+.text-container {
+    text-align: center;
+    color: black;
+    animation: drop-center 2s ease forwards;
+}
+
+.text-container button {
+    margin-top: 2rem;
+    padding: 0.8rem 1.5rem;
+    cursor: pointer;
+}
+
+/* Fade out */
+.fade-out {
+    opacity: 0;
+}
+
+/* Drop animation */
+@keyframes drop-center {
+    0% { transform: translateY(-100px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+}
+
+/* Welcome page */
+.welcome {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(to bottom, #000, #fff);
+}
+
+.welcome h1 {
+    font-size: 3rem;
+    color: black;
+    transition: transform 0.2s ease;
+}
