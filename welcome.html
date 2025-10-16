@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="welcome">
+        <h1 id="welcome-text">blank</h1>
+    </div>
+
+    <audio id="beat" src="music/beat.mp3" autoplay loop></audio>
+
+    <script>
+        const text = document.getElementById('welcome-text');
+
+        // Simple animation example: text changes with beat
+        setInterval(() => {
+            text.style.transform = `scale(${1 + Math.random()*0.2})`;
+        }, 300); // sync to beat
+    </script>
+</body>
+</html>
