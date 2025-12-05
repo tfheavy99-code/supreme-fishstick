@@ -1,33 +1,509 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Splash Screen</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>MONOCHROME // REMASTERED</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- CORE TYPOGRAPHY & VARS --- */
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&family=Syncopate:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #050505;
+            --text-color: #f0f0f0;
+            --accent: #ffffff;
+            --transition-speed: 1.2s;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Space Grotesk', sans-serif;
+            overflow: hidden; /* Prevent scroll during splash */
+            margin: 0;
+            cursor: none; /* Custom cursor */
+        }
+
+        /* --- CUSTOM CURSOR --- */
+        .cursor-dot,
+        .cursor-outline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: 9999;
+            pointer-events: none;
+        }
+
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            mix-blend-mode: difference;
+        }
+
+        .cursor-outline {
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            transition: width 0.2s, height 0.2s, background-color 0.2s;
+            mix-blend-mode: difference;
+        }
+
+        body:hover .cursor-outline {
+            width: 40px;
+            height: 40px;
+        }
+        
+        /* Hover state for links/buttons */
+        body.hovering .cursor-outline {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: transparent;
+        }
+
+        /* --- CANVAS BACKGROUND --- */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.6;
+        }
+
+        /* --- SPLASH SCREEN --- */
+        .splash-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: transform var(--transition-speed) cubic-bezier(0.77, 0, 0.175, 1);
+            background: radial-gradient(circle at center, rgba(20,20,20,0) 0%, rgba(0,0,0,1) 100%);
+        }
+
+        .splash-container.slide-up {
+            transform: translateY(-100%);
+        }
+
+        .splash-content {
+            text-align: center;
+            z-index: 2;
+            position: relative;
+        }
+
+        /* Glitchy Title */
+        .title-large {
+            font-family: 'Syncopate', sans-serif;
+            font-size: clamp(2rem, 8vw, 6rem);
+            font-weight: 700;
+            letter-spacing: -2px;
+            text-transform: uppercase;
+            position: relative;
+            color: white;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: slideUpFade 1s 0.2s forwards cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            letter-spacing: 0.5em;
+            color: #888;
+            margin-bottom: 4rem;
+            opacity: 0;
+            animation: slideUpFade 1s 0.4s forwards cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* The Button */
+        .enter-btn {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 1.5rem 4rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: none; /* Hide default cursor */
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            opacity: 0;
+            animation: slideUpFade 1s 0.6s forwards cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .enter-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: white;
+            transition: left 0.4s ease;
+            z-index: -1;
+        }
+
+        .enter-btn:hover {
+            color: black;
+            border-color: white;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .enter-btn:hover::before {
+            left: 0;
+        }
+
+        /* --- MAIN CONTENT (WELCOME) --- */
+        .main-content {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background-color: #f0f0f0; /* Inverted Theme */
+            color: #050505;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 1s 0.5s ease;
+            pointer-events: none;
+        }
+
+        .main-content.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 2rem;
+            max-width: 1200px;
+            padding: 2rem;
+        }
+
+        .hero-text {
+            font-family: 'Syncopate', sans-serif;
+            font-weight: 700;
+            font-size: clamp(3rem, 10vw, 8rem);
+            line-height: 0.9;
+            letter-spacing: -4px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1s 1s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .main-content.active .hero-text {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero-desc {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+            color: #444;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 1s 1.2s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .main-content.active .hero-desc {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- UTILS --- */
+        @keyframes slideUpFade {
+            0% { transform: translateY(40px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Grain overlay */
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+    </style>
 </head>
 <body>
-    <div class="splash">
-        <div class="text-container">
-            <h1 id="splash-text">Black & White Animation</h1>
-            <button id="ok-btn">OK</button>
+
+    <!-- Audio generated by code (No external file needed) -->
+    <div id="click-sfx"></div>
+
+    <!-- Custom Cursor -->
+    <div class="cursor-dot" data-cursor-dot></div>
+    <div class="cursor-outline" data-cursor-outline></div>
+
+    <!-- Film Grain -->
+    <div class="noise"></div>
+
+    <!-- Background Animation -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Splash Screen -->
+    <div class="splash-container" id="splash">
+        <div class="splash-content">
+            <h1 class="title-large">MONOCHROME</h1>
+            <p class="subtitle">DIGITAL EXPERIENCE v2.0</p>
+            <button id="enter-btn" class="enter-btn">INITIALIZE SYSTEM</button>
         </div>
     </div>
 
-    <audio id="click-sfx" src="sfx/click.mp3"></audio>
+    <!-- Main Content (Welcome) -->
+    <div class="main-content" id="welcome-section">
+        <div class="content-grid">
+            <div class="hero-text">WELCOME<br>HOME</div>
+            <p class="hero-desc">
+                The transition is complete. You have entered the main interface. 
+                Experience the contrast between the void and the light.
+            </p>
+            <div class="mt-8">
+                <a href="#" class="text-black font-bold border-b-2 border-black hover:text-gray-500 transition-colors uppercase tracking-widest text-sm">Explore Work</a>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const btn = document.getElementById('ok-btn');
-        const sfx = document.getElementById('click-sfx');
+        // --- CUSTOM CURSOR ---
+        const cursorDot = document.querySelector('[data-cursor-dot]');
+        const cursorOutline = document.querySelector('[data-cursor-outline]');
+        const enterBtn = document.getElementById('enter-btn');
+        const body = document.body;
 
-        btn.addEventListener('click', () => {
-            sfx.play();
-            document.querySelector('.splash').classList.add('fade-out');
-            setTimeout(() => {
-                window.location.href = 'welcome.html';
-            }, 1000); // wait 1s for fade-out
+        window.addEventListener('mousemove', function(e) {
+            const posX = e.clientX;
+            const posY = e.clientY;
+
+            // Dot follows instantly
+            cursorDot.style.left = `${posX}px`;
+            cursorDot.style.top = `${posY}px`;
+
+            // Outline follows with lag/animation
+            cursorOutline.animate({
+                left: `${posX}px`,
+                top: `${posY}px`
+            }, { duration: 500, fill: "forwards" });
         });
+
+        // Hover effects
+        enterBtn.addEventListener('mouseenter', () => body.classList.add('hovering'));
+        enterBtn.addEventListener('mouseleave', () => body.classList.remove('hovering'));
+
+
+        // --- PARTICLE CANVAS ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let particlesArray;
+
+        // Get mouse position for interaction
+        let mouse = {
+            x: null,
+            y: null,
+            radius: (canvas.height/80) * (canvas.width/80)
+        }
+
+        window.addEventListener('mousemove', 
+            function(event) {
+                mouse.x = event.x;
+                mouse.y = event.y;
+            }
+        );
+
+        // Particle Class
+        class Particle {
+            constructor(x, y, directionX, directionY, size, color) {
+                this.x = x;
+                this.y = y;
+                this.directionX = directionX;
+                this.directionY = directionY;
+                this.size = size;
+                this.color = color;
+            }
+            // Method to draw individual particle
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2, false);
+                ctx.fillStyle = '#ffffff';
+                ctx.fill();
+            }
+            // Check particle position, check mouse position, move the particle, draw the particle
+            update() {
+                if (this.x > canvas.width || this.x < 0) {
+                    this.directionX = -this.directionX;
+                }
+                if (this.y > canvas.height || this.y < 0) {
+                    this.directionY = -this.directionY;
+                }
+
+                // Check collision detection - mouse position / particle position
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx*dx + dy*dy);
+                if (distance < mouse.radius + this.size){
+                    if (mouse.x < this.x && this.x < canvas.width - this.size * 10) {
+                        this.x += 2;
+                    }
+                    if (mouse.x > this.x && this.x > this.size * 10) {
+                        this.x -= 2;
+                    }
+                    if (mouse.y < this.y && this.y < canvas.height - this.size * 10) {
+                        this.y += 2;
+                    }
+                    if (mouse.y > this.y && this.y > this.size * 10) {
+                        this.y -= 2;
+                    }
+                }
+                this.x += this.directionX;
+                this.y += this.directionY;
+                this.draw();
+            }
+        }
+
+        function init() {
+            particlesArray = [];
+            let numberOfParticles = (canvas.height * canvas.width) / 9000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                let size = (Math.random() * 2) + 1;
+                let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+                let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+                let directionX = (Math.random() * 1) - 0.5;
+                let directionY = (Math.random() * 1) - 0.5;
+                let color = '#ffffff';
+
+                particlesArray.push(new Particle(x, y, directionX, directionY, size, color));
+            }
+        }
+
+        function connect(){
+            let opacityValue = 1;
+            for (let a = 0; a < particlesArray.length; a++) {
+                for (let b = a; b < particlesArray.length; b++) {
+                    let distance = (( particlesArray[a].x - particlesArray[b].x) * (particlesArray[a].x - particlesArray[b].x))
+                    + ((particlesArray[a].y - particlesArray[b].y) * (particlesArray[a].y - particlesArray[b].y));
+                    
+                    if (distance < (canvas.width/7) * (canvas.height/7)) {
+                        opacityValue = 1 - (distance/20000);
+                        ctx.strokeStyle = 'rgba(255, 255, 255,' + opacityValue + ')';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(particlesArray[a].x, particlesArray[a].y);
+                        ctx.lineTo(particlesArray[b].x, particlesArray[b].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, innerWidth, innerHeight);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+            }
+            connect();
+        }
+
+        window.addEventListener('resize', 
+            function(){
+                canvas.width = innerWidth;
+                canvas.height = innerHeight;
+                mouse.radius = ((canvas.height/80) * (canvas.height/80));
+                init();
+            }
+        );
+
+        window.addEventListener('mouseout',
+            function(){
+                mouse.x = undefined;
+                mouse.y = undefined;
+            }
+        )
+
+        init();
+        animate();
+
+
+        // --- AUDIO GENERATOR (PROCEDURAL) ---
+        // Generates a cool sci-fi "click/transition" sound without external files
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSciFiSound() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            oscillator.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.5);
+
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.6);
+        }
+
+
+        // --- TRANSITION LOGIC ---
+        const splash = document.getElementById('splash');
+        const welcome = document.getElementById('welcome-section');
+
+        enterBtn.addEventListener('click', () => {
+            // 1. Play Sound
+            playSciFiSound();
+
+            // 2. Animate Splash Out
+            splash.classList.add('slide-up');
+
+            // 3. Reveal Main Content & Invert Colors
+            // We wait for the splash to move up slightly before revealing content
+            setTimeout(() => {
+                welcome.classList.add('active');
+                
+                // Change cursor color for the white background
+                cursorDot.style.mixBlendMode = "normal";
+                cursorDot.style.backgroundColor = "black";
+                cursorOutline.style.borderColor = "rgba(0,0,0,0.5)";
+                cursorOutline.style.mixBlendMode = "normal";
+                
+            }, 600);
+        });
+
     </script>
 </body>
 </html>
